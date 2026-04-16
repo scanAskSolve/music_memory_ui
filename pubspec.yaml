@@ -1,0 +1,95 @@
+name: music_memory_ui
+description: "音樂記憶 — 結合 YouTube 音樂解析、AI 智慧推薦與社交探索的跨平台音樂應用"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+  flutter: ">=3.24.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # Firebase & Auth
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.0
+  google_sign_in: ^6.2.2
+  sign_in_with_apple: ^6.1.4
+  flutter_facebook_auth: ^7.1.1
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Routing
+  go_router: ^14.6.2
+
+  # Networking
+  dio: ^5.7.0
+
+  # UI Components
+  flutter_card_swiper: ^7.0.1
+  cached_network_image: ^3.4.1
+  shimmer: ^3.0.0
+  flutter_animate: ^4.5.2
+  lottie: ^3.1.3
+
+  # Audio
+  just_audio: ^0.9.42
+  just_audio_background: ^0.0.1-beta.13
+  audio_service: ^0.18.15
+  audio_session: ^0.1.21
+
+  # Local Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  isar: ^3.1.0+1
+  isar_flutter_libs: ^3.1.0+1
+
+  # Utilities
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+  intl: ^0.19.0
+  share_handler: ^0.0.21
+  url_launcher: ^6.3.1
+  path_provider: ^2.1.5
+  connectivity_plus: ^6.1.0
+  permission_handler: ^11.3.1
+  flutter_dotenv: ^5.2.1
+  logger: ^2.5.0
+
+  # Icons & Fonts
+  cupertino_icons: ^1.0.8
+  material_design_icons_flutter: ^7.0.7296
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  build_runner: ^2.4.13
+  freezed: ^2.5.7
+  json_serializable: ^6.8.0
+  riverpod_generator: ^2.6.2
+  isar_generator: ^3.1.0+1
+  hive_generator: ^2.0.1
+  mockito: ^5.4.4
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/fonts/
+    - .env
+
+  fonts:
+    - family: NotoSansTC
+      fonts:
+        - asset: assets/fonts/NotoSansTC-Regular.otf
+        - asset: assets/fonts/NotoSansTC-Bold.otf
+          weight: 700
