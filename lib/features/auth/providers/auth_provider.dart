@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_endpoints.dart';
 import '../services/firebase_auth_service.dart';
+import 'local_auth_provider.dart';
 
 final firebaseAuthServiceProvider = Provider<FirebaseAuthService>(
   (ref) => FirebaseAuthService(),
@@ -76,10 +77,12 @@ class AuthController extends StateNotifier<AuthState> {
     }
   }
 
+  /// F0 暫緩中：匿名試用不打 Firebase（會被無效 API key 拒絕），
+  /// 改用本地旗標 + X-Device-Id（由 backend 的 DeviceIdFilter 解析）。
   Future<void> signInAnonymously() async {
     state = const AuthState(isLoading: true);
     try {
-      await _authService.signInAnonymously();
+      await _ref.read(localAuthProvider.notifier).enableAnonymous();
       state = const AuthState();
     } catch (e) {
       state = AuthState(error: '匿名登入失敗: $e');
@@ -89,7 +92,12 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> signOut() async {
     state = const AuthState(isLoading: true);
     try {
-      await _authService.signOut();
+      await _ref.read(localAuthProvider.notifier).clear();
+      // Firebase 登出：若使用者其實是匿名模式進來、從沒登入過，
+      // 這裡仍 try/catch 包起來避免 placeholder API key 報錯。
+      try {
+        await _authService.signOut();
+      } catch (_) {}
       state = const AuthState();
     } catch (e) {
       state = AuthState(error: '登出失敗: $e');

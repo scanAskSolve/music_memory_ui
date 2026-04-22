@@ -50,15 +50,45 @@
 
 ### 2.1 安裝 Flutter SDK
 
-```bash
-# macOS / Linux（使用 FVM 管理版本 - 推薦）
-dart pub global activate fvm
+本專案需 **Flutter 3.24.0+**（見 [環境需求](#1-環境需求)）。以下依作業系統擇一設定即可。
+
+#### Windows
+
+**官方 SDK（最直接）**
+
+1. 使用 **64 位元 Windows 10+**，並安裝 [Git for Windows](https://git-scm.com/download/win)（若尚未安裝）。
+2. 自 [Flutter — Install on Windows](https://docs.flutter.dev/get-started/install/windows) 下載 **stable** zip，解壓至**路徑不含空格**且不需高權限的目錄（例如 `C:\src\flutter`；避免 `C:\Program Files\`）。
+3. 將 `C:\src\flutter\bin`（依實際解壓路徑調整）加入使用者 **Path**，重新開啟終端機。
+4. 執行 `flutter doctor -v`，依提示安裝／設定 Android Studio、接受授權等。
+
+若需鎖定 **3.24.x**，可自 [Flutter SDK archive](https://docs.flutter.dev/release/archive) 下載對應版本，或依團隊慣例使用 FVM。
+
+**FVM（與專案版本一致時推薦）**
+
+- 安裝方式擇一：例如 [Scoop](https://scoop.sh/) 的 `scoop install fvm`，或先安裝 Flutter 後執行 `dart pub global activate fvm` 並將 pub **global bin** 加入 PATH（詳見 [FVM — Installation](https://fvm.app/documentation/getting-started/installation)）。
+- 於專案目錄：
+
+```powershell
 fvm install 3.24.0
 fvm use 3.24.0
-
-# 或直接安裝
-# 參見 https://docs.flutter.dev/get-started/install
 ```
+
+之後建議以 `fvm flutter` 取代直接執行 `flutter`，避免誤用全域 SDK。
+
+#### macOS / Linux
+
+**FVM（推薦）**
+
+```bash
+dart pub global activate fvm
+# 將 pub global bin 加入 PATH 後：
+fvm install 3.24.0
+fvm use 3.24.0
+```
+
+**或直接安裝 Flutter**
+
+見 [Install Flutter](https://docs.flutter.dev/get-started/install)。
 
 ### 2.2 驗證安裝
 

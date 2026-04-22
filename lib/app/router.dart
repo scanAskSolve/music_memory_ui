@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../features/auth/pages/login_page.dart';
 import '../features/auth/providers/auth_provider.dart';
+import '../features/auth/providers/local_auth_provider.dart';
 import '../features/home/pages/home_page.dart';
 import '../features/parse/pages/parse_page.dart';
 import '../features/explore/pages/explore_page.dart';
@@ -15,11 +16,13 @@ import 'shell.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
+  final isAnonymous = ref.watch(localAuthProvider);
 
   return GoRouter(
     initialLocation: '/',
     redirect: (context, state) {
-      final isLoggedIn = authState.valueOrNull != null;
+      // F0 暫緩中：Firebase 登入或本地匿名旗標都算「已登入」。
+      final isLoggedIn = authState.valueOrNull != null || isAnonymous;
       final isLoginRoute = state.matchedLocation == '/login';
 
       if (!isLoggedIn && !isLoginRoute) return '/login';

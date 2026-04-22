@@ -133,8 +133,10 @@ class PlaylistController extends StateNotifier<PlaylistState> {
 
   Future<void> deleteMultiple(List<String> ids) async {
     for (final id in ids) {
+      final numeric = int.tryParse(id);
+      if (numeric == null) continue;
       try {
-        await _apiClient.delete('${ApiEndpoints.musicDelete}/$id');
+        await _apiClient.delete(ApiEndpoints.musicDelete(numeric));
       } catch (_) {}
     }
     _allMusic = _allMusic.where((m) => !ids.contains(m.id)).toList();
