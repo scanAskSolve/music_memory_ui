@@ -56,7 +56,7 @@ class ParseController extends StateNotifier<ParseState> {
         data: {'url': url},
       );
       final result =
-          ParseResult.fromJson(response.data as Map<String, dynamic>);
+          ParseResult.fromJson(response.data['data'] as Map<String, dynamic>);
       state = ParseState(result: result);
     } catch (e) {
       state = ParseState(error: '解析失敗，請確認網址是否正確: $e');
@@ -68,12 +68,17 @@ class ParseController extends StateNotifier<ParseState> {
     state = state.copyWith(result: state.result!.copyWith(isCover: isCover));
   }
 
+  void updateArtist(String newArtist) {
+    if (state.result == null) return;
+    state = state.copyWith(result: state.result!.copyWith(artist: newArtist));
+  }
+
   Future<void> saveMusic() async {
     if (state.result == null) return;
     state = state.copyWith(isSaving: true);
     try {
       await _apiClient.post(
-        ApiEndpoints.musicList,
+        ApiEndpoints.musicSave,
         data: state.result!.toJson(),
       );
       state = const ParseState(isSaved: true);

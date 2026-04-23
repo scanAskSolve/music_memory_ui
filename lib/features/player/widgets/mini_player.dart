@@ -95,15 +95,25 @@ class MiniPlayer extends ConsumerWidget {
                   ),
 
                   // 播放控制
-                  IconButton(
-                    onPressed: controller.togglePlayPause,
-                    icon: Icon(
-                      playerState.isPlaying
-                          ? Icons.pause_rounded
-                          : Icons.play_arrow_rounded,
+                  if (playerState.isLoading)
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  else
+                    IconButton(
+                      onPressed: controller.togglePlayPause,
+                      icon: Icon(
+                        playerState.isPlaying
+                            ? Icons.pause_rounded
+                            : Icons.play_arrow_rounded,
+                      ),
+                      iconSize: 28,
                     ),
-                    iconSize: 28,
-                  ),
                   IconButton(
                     onPressed: controller.next,
                     icon: const Icon(Icons.skip_next_rounded),

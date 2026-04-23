@@ -63,7 +63,10 @@ class PlaylistController extends StateNotifier<PlaylistState> {
     state = state.copyWith(isLoading: true);
     try {
       final response = await _apiClient.get(ApiEndpoints.musicList);
-      final list = response.data['data'] as List<dynamic>? ?? [];
+      final responseData = response.data['data'];
+      final list = (responseData != null && responseData['records'] != null)
+          ? responseData['records'] as List<dynamic>
+          : [];
       _allMusic =
           list.map((e) => Music.fromJson(e as Map<String, dynamic>)).toList();
       state = state.copyWith(isLoading: false, musicList: _applyFilter());

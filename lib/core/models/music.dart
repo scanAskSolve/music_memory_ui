@@ -35,23 +35,27 @@ class Music {
 
   factory Music.fromJson(Map<String, dynamic> json) {
     return Music(
-      id: json['id'] as String,
-      title: json['title'] as String,
-      artist: json['artist'] as String,
+      id: json['id']?.toString() ?? '',
+      title: json['title'] as String? ?? '',
+      artist: json['artist'] as String? ?? '',
       album: json['album'] as String?,
       coverUrl: json['coverUrl'] as String?,
-      youtubeUrl: json['youtubeUrl'] as String,
+      youtubeUrl: json['youtubeUrl'] as String? ?? '',
       duration: Duration(seconds: json['durationSeconds'] as int? ?? 0),
       isCover: json['isCover'] as bool? ?? false,
-      originalMusicId: json['originalMusicId'] as String?,
-      aiCategory: json['aiCategory'] as String?,
+      originalMusicId: json['originalMusicId']?.toString(),
+      aiCategory: (json['aiCategory'] ?? json['aiGenre']) as String?,
       playCount: json['playCount'] as int? ?? 0,
       isFavorite: json['isFavorite'] as bool? ?? false,
-      releaseDate: json['releaseDate'] != null
-          ? DateTime.parse(json['releaseDate'] as String)
+      releaseDate: (json['releaseDate'] ?? json['publishedAt']) != null
+          ? DateTime.parse((json['releaseDate'] ?? json['publishedAt']) as String)
           : null,
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt'] as String) 
+          : DateTime.now(),
+      updatedAt: json['updatedAt'] != null 
+          ? DateTime.parse(json['updatedAt'] as String) 
+          : DateTime.now(),
     );
   }
 

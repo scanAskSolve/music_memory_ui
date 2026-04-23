@@ -6,6 +6,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/parse_provider.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/utils/duration_formatter.dart';
+import '../../playlist/providers/playlist_provider.dart';
 
 class ParsePage extends ConsumerStatefulWidget {
   const ParsePage({super.key});
@@ -28,6 +29,74 @@ class _ParsePageState extends ConsumerState<ParsePage> {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
     if (data?.text != null) {
       _urlController.text = data!.text!;
+    }
+  }
+
+  Future<void> _editArtist(BuildContext context, String currentArtist,
+      ParseController controller, WidgetRef ref) async {
+    final existingArtists = ref
+        .read(playlistControllerProvider)
+        .musicList
+        .map((e) => e.artist)
+        .where((a) => a.isNotEmpty)
+        .toSet()
+        .toList();
+
+    TextEditingController? activeController;
+
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('修改歌手名稱'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Autocomplete<String>(
+            initialValue: TextEditingValue(text: currentArtist),
+            optionsBuilder: (TextEditingValue textEditingValue) {
+              if (textEditingValue.text.isEmpty) {
+                return existingArtists;
+              }
+              return existingArtists.where((String option) {
+                return option
+                    .toLowerCase()
+                    .contains(textEditingValue.text.toLowerCase());
+              });
+            },
+            onSelected: (String selection) {
+              if (activeController != null) {
+                activeController!.text = selection;
+              }
+            },
+            fieldViewBuilder: (context, fieldTextEditingController,
+                fieldFocusNode, onFieldSubmitted) {
+              activeController = fieldTextEditingController;
+              return TextField(
+                controller: fieldTextEditingController,
+                focusNode: fieldFocusNode,
+                autofocus: true,
+                decoration: const InputDecoration(hintText: '輸入歌手名稱'),
+                onSubmitted: (String value) {
+                  onFieldSubmitted();
+                },
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context)
+                .pop(activeController?.text.trim() ?? currentArtist),
+            child: const Text('確定'),
+          ),
+        ],
+      ),
+    );
+    if (result != null && result.isNotEmpty && result != currentArtist) {
+      controller.updateArtist(result);
     }
   }
 
@@ -144,11 +213,27 @@ class _ParsePageState extends ConsumerState<ParsePage> {
                           const SizedBox(height: 4),
 
                           // 演出者
-                          Text(
-                            parseState.result!.artist,
-                            style: theme.textTheme.bodyLarge?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '歌手：${parseState.result!.artist}',
+                                  style: theme.textTheme.bodyLarge?.copyWith(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit_rounded, size: 20),
+                                onPressed: () => _editArtist(
+                                  context,
+                                  parseState.result!.artist,
+                                  parseController,
+                                  ref,
+                                ),
+                                tooltip: '修改歌手名稱',
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 8),
 

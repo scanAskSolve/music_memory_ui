@@ -11,7 +11,10 @@ final recentMusicProvider = FutureProvider<List<Music>>((ref) async {
       ApiEndpoints.musicList,
       queryParameters: {'sort': 'updatedAt', 'order': 'desc', 'limit': 20},
     );
-    final list = response.data['data'] as List<dynamic>? ?? [];
+    final responseData = response.data['data'];
+    final list = (responseData != null && responseData['records'] != null)
+        ? responseData['records'] as List<dynamic>
+        : [];
     return list.map((e) => Music.fromJson(e as Map<String, dynamic>)).toList();
   } catch (_) {
     return [];

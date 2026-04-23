@@ -6,6 +6,7 @@ import '../providers/playlist_provider.dart';
 import '../../../core/models/music.dart';
 import '../../../core/widgets/music_card.dart';
 import '../../../core/widgets/error_view.dart';
+import '../../player/providers/player_provider.dart';
 
 class PlaylistPage extends ConsumerStatefulWidget {
   const PlaylistPage({super.key});
@@ -19,6 +20,22 @@ class _PlaylistPageState extends ConsumerState<PlaylistPage> {
   bool _isSelectionMode = false;
   final Set<String> _selectedIds = {};
   String _searchQuery = '';
+
+  void _play(List<Music> list, Music music) {
+    final player = ref.read(playerControllerProvider.notifier);
+    player.setQueue(list);
+    player.play(music);
+    context.push('/player');
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // 每次進入清單頁面時，自動重新拉取最新資料
+    Future.microtask(() {
+      ref.read(playlistControllerProvider.notifier).loadPlaylist();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -206,8 +223,8 @@ class _PlaylistPageState extends ConsumerState<PlaylistPage> {
                           _selectedIds.add(music.id);
                         }
                       })
-                  : () => context.push('/player'),
-              onPlay: _isSelectionMode ? null : () => context.push('/player'),
+                  : () => _play(list, music),
+              onPlay: _isSelectionMode ? null : () => _play(list, music),
               trailing: _isSelectionMode
                   ? Checkbox(
                       value: _selectedIds.contains(music.id),
@@ -256,7 +273,7 @@ class _PlaylistPageState extends ConsumerState<PlaylistPage> {
                   }
                 });
               } else {
-                context.push('/player');
+                _play(list, music);
               }
             },
             onLongPress: () => setState(() {

@@ -1,4 +1,7 @@
+import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:just_audio/just_audio.dart';
+import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '../../../core/models/music.dart';
 
@@ -19,6 +22,7 @@ final playerControllerProvider =
 class PlayerState {
   final Music? currentMusic;
   final bool isPlaying;
+  final bool isLoading;
   final Duration position;
   final Duration duration;
   final bool isShuffle;
@@ -26,10 +30,12 @@ class PlayerState {
   final List<LyricLine> lyrics;
   final int currentLyricIndex;
   final List<Music> queue;
+  final String? error;
 
   const PlayerState({
     this.currentMusic,
     this.isPlaying = false,
+    this.isLoading = false,
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.isShuffle = false,
@@ -37,11 +43,13 @@ class PlayerState {
     this.lyrics = const [],
     this.currentLyricIndex = 0,
     this.queue = const [],
+    this.error,
   });
 
   PlayerState copyWith({
     Music? currentMusic,
     bool? isPlaying,
+    bool? isLoading,
     Duration? position,
     Duration? duration,
     bool? isShuffle,
@@ -49,10 +57,12 @@ class PlayerState {
     List<LyricLine>? lyrics,
     int? currentLyricIndex,
     List<Music>? queue,
+    String? error,
   }) {
     return PlayerState(
       currentMusic: currentMusic ?? this.currentMusic,
       isPlaying: isPlaying ?? this.isPlaying,
+      isLoading: isLoading ?? this.isLoading,
       position: position ?? this.position,
       duration: duration ?? this.duration,
       isShuffle: isShuffle ?? this.isShuffle,
@@ -60,39 +70,105 @@ class PlayerState {
       lyrics: lyrics ?? this.lyrics,
       currentLyricIndex: currentLyricIndex ?? this.currentLyricIndex,
       queue: queue ?? this.queue,
+      error: error,
     );
   }
 }
 
 class PlayerController extends StateNotifier<PlayerState> {
-  PlayerController() : super(const PlayerState());
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  final YoutubeExplode _yt = YoutubeExplode();
 
-  // TODO: 整合 just_audio 實際播放邏輯
-  // 目前提供 UI 狀態管理框架
+  PlayerController() : super(const PlayerState()) {
+    _init();
+  }
 
-  void play(Music music) {
+  void _init() {
+    _audioPlayer.playerStateStream.listen((playerState) {
+      final isPlaying = playerState.playing;
+      final processingState = playerState.processingState;
+
+      if (processingState == ProcessingState.completed) {
+        if (state.repeatMode == RepeatMode.one) {
+          _audioPlayer.seek(Duration.zero);
+          _audioPlayer.play();
+        } else {
+          next();
+        }
+      } else {
+        state = state.copyWith(
+          isPlaying: isPlaying && processingState != ProcessingState.completed,
+          isLoading: processingState == ProcessingState.buffering ||
+              processingState == ProcessingState.loading,
+        );
+      }
+    });
+
+    _audioPlayer.positionStream.listen((position) {
+      state = state.copyWith(position: position);
+      _updateCurrentLyricIndex();
+    });
+
+    _audioPlayer.durationStream.listen((duration) {
+      if (duration != null) {
+        state = state.copyWith(duration: duration);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    _yt.close();
+    super.dispose();
+  }
+
+  Future<void> play(Music music) async {
     state = state.copyWith(
       currentMusic: music,
-      isPlaying: true,
+      isPlaying: false,
+      isLoading: true,
       position: Duration.zero,
       duration: music.duration,
+      error: null,
     );
+
+    try {
+      final videoId = VideoId(music.youtubeUrl).value;
+      final manifest = await _yt.videos.streamsClient.getManifest(videoId);
+      final audioInfo = manifest.audioOnly.withHighestBitrate();
+      final streamUrl = audioInfo.url.toString();
+
+      await _audioPlayer.setUrl(streamUrl);
+      _audioPlayer.play();
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: '無法播放此首音樂: $e',
+      );
+    }
   }
 
   void togglePlayPause() {
-    state = state.copyWith(isPlaying: !state.isPlaying);
+    if (state.isPlaying) {
+      pause();
+    } else {
+      resume();
+    }
   }
 
   void pause() {
-    state = state.copyWith(isPlaying: false);
+    _audioPlayer.pause();
   }
 
   void resume() {
-    state = state.copyWith(isPlaying: true);
+    if (state.currentMusic != null) {
+      _audioPlayer.play();
+    }
   }
 
   void seek(Duration position) {
-    state = state.copyWith(position: position);
+    _audioPlayer.seek(position);
   }
 
   void next() {
@@ -100,7 +176,14 @@ class PlayerController extends StateNotifier<PlayerState> {
     final currentIdx = state.queue.indexWhere(
       (m) => m.id == state.currentMusic?.id,
     );
-    final nextIdx = (currentIdx + 1) % state.queue.length;
+    
+    int nextIdx;
+    if (state.isShuffle) {
+      nextIdx = math.Random().nextInt(state.queue.length);
+    } else {
+      nextIdx = (currentIdx + 1) % state.queue.length;
+    }
+    
     play(state.queue[nextIdx]);
   }
 
@@ -109,8 +192,14 @@ class PlayerController extends StateNotifier<PlayerState> {
     final currentIdx = state.queue.indexWhere(
       (m) => m.id == state.currentMusic?.id,
     );
-    final prevIdx =
-        (currentIdx - 1 + state.queue.length) % state.queue.length;
+    
+    int prevIdx;
+    if (state.isShuffle) {
+      prevIdx = math.Random().nextInt(state.queue.length);
+    } else {
+      prevIdx = (currentIdx - 1 + state.queue.length) % state.queue.length;
+    }
+    
     play(state.queue[prevIdx]);
   }
 
@@ -129,8 +218,7 @@ class PlayerController extends StateNotifier<PlayerState> {
   }
 
   void updatePosition(Duration position) {
-    state = state.copyWith(position: position);
-    _updateCurrentLyricIndex();
+    seek(position);
   }
 
   void setLyrics(List<LyricLine> lyrics) {

@@ -21,12 +21,7 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     redirect: (context, state) {
-      // F0 暫緩中：Firebase 登入或本地匿名旗標都算「已登入」。
-      final isLoggedIn = authState.valueOrNull != null || isAnonymous;
-      final isLoginRoute = state.matchedLocation == '/login';
-
-      if (!isLoggedIn && !isLoginRoute) return '/login';
-      if (isLoggedIn && isLoginRoute) return '/';
+      // F0 暫緩中：直接無使用者直接通過
       return null;
     },
     routes: [

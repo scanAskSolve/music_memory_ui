@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -26,6 +27,11 @@ String resolveApiBaseUrl() {
   if (_kApiBaseFromEnv.isNotEmpty) return _kApiBaseFromEnv;
   final fromDotenv = dotenv.maybeGet('BASE_URL');
   if (fromDotenv != null && fromDotenv.isNotEmpty) return fromDotenv;
+  
+  // 處理 Android 模擬器無法存取 localhost 的問題
+  if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    return 'http://10.0.2.2:8080/api/v1';
+  }
   return 'http://localhost:8080/api/v1';
 }
 
